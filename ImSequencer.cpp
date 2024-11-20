@@ -147,6 +147,76 @@ namespace ImSequencer
       else
       {
 
+         //Zoom  
+         if (regionRect.Contains(io.MousePos))
+         {
+            bool overCustomDraw = false;
+            for (auto& custom : customDraws)
+            {
+               if (custom.customRect.Contains(io.MousePos))
+               {
+                  overCustomDraw = true;
+               }
+            }
+            if (!overCustomDraw)
+            {
+               if (io.KeyAlt) {
+                  if (io.MouseWheel < -FLT_EPSILON)
+                  {
+                     framePixelWidthTarget *= 1.2f; io.MouseWheel = 0;
+                  }
+                  if (io.MouseWheel > FLT_EPSILON)
+                  {
+                     framePixelWidthTarget *= 1 / 1.2f; io.MouseWheel = 0;
+                  }
+                  // Clamp the zoom level
+                  int visibleFrameCountAfterZoom = (int)floorf((canvas_size.x - legendWidth) / framePixelWidthTarget);
+                  if (visibleFrameCountAfterZoom > frameCount)
+                  {
+                     framePixelWidthTarget = (canvas_size.x - legendWidth) / (float)frameCount;
+                  }
+               }
+               else //if (io.KeyShift)
+               {
+                  if (io.MouseWheel < -FLT_EPSILON)
+                  {
+                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
+                  }
+                  if (io.MouseWheel > FLT_EPSILON)
+                  {
+                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
+                  }
+                  if (*firstFrame < 0) *firstFrame = 0;
+                  if (*firstFrame > sequence->GetFrameMax() - visibleFrameCount)
+                  {
+                     *firstFrame = sequence->GetFrameMax() - visibleFrameCount;
+                  }
+               }
+            }
+         }
+
+         //Keep the current frame in view if the option is enabled
+         if (sequenceOptions & SEQUENCER_KEEP_CURRENTFRAME_IN_VIEW && currentFrame && *currentFrame >= 0)
+         {
+            int currentFramePixel = (int)((*currentFrame - firstFrameUsed) * framePixelWidth);
+            int visibleFrameStartPixel = legendWidth;
+            int visibleFrameEndPixel = canvas_size.x - legendWidth;
+
+            // Calculate the buffer range (1/N of the visible frame range)
+            int bufferRange = (visibleFrameEndPixel - visibleFrameStartPixel) / 3;
+
+            if (currentFramePixel < visibleFrameStartPixel + bufferRange)
+            {
+               *firstFrame -= (visibleFrameStartPixel + bufferRange - currentFramePixel) / framePixelWidth;
+            }
+            else if (currentFramePixel > visibleFrameEndPixel - bufferRange)
+            {
+               *firstFrame += (currentFramePixel - (visibleFrameEndPixel - bufferRange)) / framePixelWidth;
+            }
+
+            // Clamp firstFrame to valid range
+            *firstFrame = ImClamp(*firstFrame, sequence->GetFrameMin(), sequence->GetFrameMax() - visibleFrameCount);
+         }
  
 
 
@@ -253,53 +323,6 @@ namespace ImSequencer
          };
 
 
-         //Zoom  
-         if (regionRect.Contains(io.MousePos))
-         {
-            bool overCustomDraw = false;
-            for (auto& custom : customDraws)
-            {
-               if (custom.customRect.Contains(io.MousePos))
-               {
-                  overCustomDraw = true;
-               }
-            }
-            if (!overCustomDraw)
-            {
-               if (io.KeyAlt) {
-                  if (io.MouseWheel < -FLT_EPSILON)
-                  {
-                     framePixelWidthTarget *= 1.2f; io.MouseWheel = 0;
-                  }
-                  if (io.MouseWheel > FLT_EPSILON)
-                  {
-                     framePixelWidthTarget *= 1 / 1.2f; io.MouseWheel = 0;
-                  }
-                  // Clamp the zoom level
-                  int visibleFrameCountAfterZoom = (int)floorf((canvas_size.x - legendWidth) / framePixelWidthTarget);
-                  if (visibleFrameCountAfterZoom > frameCount)
-                  {
-                     framePixelWidthTarget = (canvas_size.x - legendWidth) / (float)frameCount;
-                  }
-               }
-               else //if (io.KeyShift)
-               {
-                  if (io.MouseWheel < -FLT_EPSILON)
-                  {
-                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
-                  }
-                  if (io.MouseWheel > FLT_EPSILON)
-                  {
-                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
-                  }
-                  if (*firstFrame < 0) *firstFrame = 0;
-                  if (*firstFrame > sequence->GetFrameMax() - visibleFrameCount)
-                  {
-                     *firstFrame = sequence->GetFrameMax() - visibleFrameCount;
-                  }
-               }
-            }
-         }
 
  
 
