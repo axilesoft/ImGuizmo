@@ -39,6 +39,8 @@ namespace ImSequencer
       SEQUENCER_ADD = 1 << 4,
       SEQUENCER_DEL = 1 << 5,
       SEQUENCER_COPYPASTE = 1 << 6,
+      SEQUENCER_KEEP_CURRENTFRAME_IN_VIEW = 1 << 7,  // keep the current frame in view
+
       SEQUENCER_EDIT_ALL = SEQUENCER_EDIT_STARTEND | SEQUENCER_CHANGE_FRAME
    };
 
