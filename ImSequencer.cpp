@@ -1,4 +1,4 @@
-// https://github.com/CedricGuillemet/ImGuizmo
+﻿// https://github.com/CedricGuillemet/ImGuizmo
 // v1.91.3 WIP
 //
 // The MIT License(MIT)
@@ -63,7 +63,7 @@ namespace ImSequencer
       int cy = (int)(io.MousePos.y);
       static float framePixelWidth = 10.f;
       static float framePixelWidthTarget = 10.f;
-      int legendWidth = 200;
+      int legendWidth = LABEL_WIDTH;
 
       static int movingEntry = -1;
       static int movingPos = -1;
@@ -147,6 +147,92 @@ namespace ImSequencer
       else
       {
 
+         // Zoom in/out
+         if (regionRect.Contains(io.MousePos))
+         {
+            bool overCustomDraw = false;
+            for (auto& custom : customDraws)
+            {
+               if (custom.customRect.Contains(io.MousePos))
+               {
+                  overCustomDraw = true;
+               }
+            }
+            if (!overCustomDraw)
+            {
+               if (io.KeyAlt) {
+                  
+                  float oldFramePixelWidthTarget = framePixelWidthTarget;
+                  if (io.MouseWheel < -FLT_EPSILON)
+                  {
+                     framePixelWidthTarget *= 1.2f; io.MouseWheel = 0; sequenceOptions |= SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW;
+                  }
+                  if (io.MouseWheel > FLT_EPSILON)
+                  {
+                     framePixelWidthTarget *= 1 / 1.2f; io.MouseWheel = 0; sequenceOptions |= SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW;
+                  }
+                  // Clamp the zoom level
+                  int visibleFrameCountAfterZoom = (int)floorf((canvas_size.x - legendWidth) / framePixelWidthTarget);
+                  if (visibleFrameCountAfterZoom > frameCount)
+                  {
+                     framePixelWidthTarget = (canvas_size.x - legendWidth) / (float)frameCount;
+                  }
+
+                  // Adjust firstFrame to keep currentFrame in view
+                  float zoomRatio = framePixelWidthTarget / oldFramePixelWidthTarget;
+                  *firstFrame = (int)((*firstFrame + *currentFrame) * zoomRatio - *currentFrame);
+                  *firstFrame = ImClamp(*firstFrame, sequence->GetFrameMin(), sequence->GetFrameMax() - visibleFrameCountAfterZoom);
+               }
+               else //if (io.KeyShift)
+               {
+                  if (io.MouseWheel < -FLT_EPSILON)
+                  {
+                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
+                  }
+                  if (io.MouseWheel > FLT_EPSILON)
+                  {
+                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
+                  }
+                  if (*firstFrame < 0) *firstFrame = 0;
+                  if (*firstFrame > sequence->GetFrameMax() - visibleFrameCount)
+                  {
+                     *firstFrame = sequence->GetFrameMax() - visibleFrameCount;
+                  }
+               }
+            }
+         }
+
+
+         // Keep the current frame in view if the option is enabled
+         if (sequenceOptions & SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW && currentFrame && *currentFrame >= 0)
+         {
+            static int lastPlaybackCurrentFrame = 0;
+            
+            int currentFramePixel = (int)((*currentFrame - firstFrameUsed) * framePixelWidth);
+            int visibleFrameStartPixel = legendWidth;
+            int visibleFrameEndPixel = canvas_size.x - legendWidth;
+
+            // Calculate the buffer range (1/N of the visible frame range)
+            int bufferRange = (visibleFrameEndPixel - visibleFrameStartPixel) / 10;
+
+            if (*currentFrame != lastPlaybackCurrentFrame) {
+               lastPlaybackCurrentFrame = *currentFrame;
+            }
+            else {
+               if (currentFramePixel < visibleFrameStartPixel + bufferRange)
+               {
+                  *firstFrame -= (visibleFrameStartPixel + bufferRange - currentFramePixel) / framePixelWidth;
+               }
+               else if (currentFramePixel > visibleFrameEndPixel - bufferRange)
+               {
+                  *firstFrame += (currentFramePixel - (visibleFrameEndPixel - bufferRange)) / framePixelWidth;
+               }
+
+               // Clamp firstFrame to valid range
+               *firstFrame = ImClamp(*firstFrame, sequence->GetFrameMin(), sequence->GetFrameMax() - visibleFrameCount);
+            }
+         }
+
  
 
 
@@ -175,7 +261,7 @@ namespace ImSequencer
          const float contentHeight = contentMax.y - contentMin.y;
 
          // full background
-         draw_list->AddRectFilled(canvas_pos, canvas_pos + canvas_size, 0xFF242424, 0);
+         draw_list->AddRectFilled(canvas_pos, canvas_pos + canvas_size, 0xA0202020, 0);
 
          // current frame top
          ImRect topRect(ImVec2(canvas_pos.x + legendWidth, canvas_pos.y), ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
@@ -253,53 +339,6 @@ namespace ImSequencer
          };
 
 
-         //Zoom  
-         if (regionRect.Contains(io.MousePos))
-         {
-            bool overCustomDraw = false;
-            for (auto& custom : customDraws)
-            {
-               if (custom.customRect.Contains(io.MousePos))
-               {
-                  overCustomDraw = true;
-               }
-            }
-            if (!overCustomDraw)
-            {
-               if (io.KeyAlt) {
-                  if (io.MouseWheel < -FLT_EPSILON)
-                  {
-                     framePixelWidthTarget *= 1.2f; io.MouseWheel = 0;
-                  }
-                  if (io.MouseWheel > FLT_EPSILON)
-                  {
-                     framePixelWidthTarget *= 1 / 1.2f; io.MouseWheel = 0;
-                  }
-                  // Clamp the zoom level
-                  int visibleFrameCountAfterZoom = (int)floorf((canvas_size.x - legendWidth) / framePixelWidthTarget);
-                  if (visibleFrameCountAfterZoom > frameCount)
-                  {
-                     framePixelWidthTarget = (canvas_size.x - legendWidth) / (float)frameCount;
-                  }
-               }
-               else //if (io.KeyShift)
-               {
-                  if (io.MouseWheel < -FLT_EPSILON)
-                  {
-                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
-                  }
-                  if (io.MouseWheel > FLT_EPSILON)
-                  {
-                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
-                  }
-                  if (*firstFrame < 0) *firstFrame = 0;
-                  if (*firstFrame > sequence->GetFrameMax() - visibleFrameCount)
-                  {
-                     *firstFrame = sequence->GetFrameMax() - visibleFrameCount;
-                  }
-               }
-            }
-         }
 
  
 
@@ -384,7 +423,10 @@ namespace ImSequencer
             customHeight = 0;
             for (int i = 0; i < *selectedEntry; i++)
                customHeight += sequence->GetCustomHeight(i);
-            draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selectedEntry + customHeight), ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selectedEntry + 1) + customHeight), 0x801080FF, 1.f);
+            draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selectedEntry + customHeight), ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selectedEntry + 1) + customHeight),
+               //0x801080FF,
+               SELECT_BACK_COLOR,
+               1.f);
          }
 
          // slots
@@ -396,7 +438,7 @@ namespace ImSequencer
             sequence->Get(i, &start, &end, NULL, &color);
             size_t localCustomHeight = sequence->GetCustomHeight(i);
 
-            ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
+            ImVec2 pos = ImVec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth -4 , contentMin.y + ItemHeight * i + 0 + customHeight);
             ImVec2 slotP1(pos.x + *start * framePixelWidth, pos.y + 2);
             ImVec2 slotP2(pos.x + *end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
             ImVec2 slotP3(pos.x + *end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2 + localCustomHeight);
@@ -405,8 +447,8 @@ namespace ImSequencer
 
             if (slotP1.x <= (canvas_size.x + contentMin.x) && slotP2.x >= (contentMin.x + legendWidth))
             {
-               draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 2);
-               draw_list->AddRectFilled(slotP1, slotP2, slotColor, 2);
+               draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 0);
+               draw_list->AddRectFilled(slotP1, slotP2, slotColor, 0);
             }
             if (ImRect(slotP1, slotP2).Contains(io.MousePos) && io.MouseDoubleClicked[0])
             {

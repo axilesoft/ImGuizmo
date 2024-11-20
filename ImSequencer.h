@@ -39,7 +39,7 @@ namespace ImSequencer
       SEQUENCER_ADD = 1 << 4,
       SEQUENCER_DEL = 1 << 5,
       SEQUENCER_COPYPASTE = 1 << 6,
-      SEQUENCER_KEEP_CURRENTFRAME_IN_VIEW = 1 << 7,  // keep the current frame in view
+      SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW = 1 << 7,  // keep the current frame in view
 
       SEQUENCER_EDIT_ALL = SEQUENCER_EDIT_STARTEND | SEQUENCER_CHANGE_FRAME
    };
@@ -71,11 +71,13 @@ namespace ImSequencer
       virtual void CustomDraw(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*legendRect*/, const ImRect& /*clippingRect*/, const ImRect& /*legendClippingRect*/) {}
       virtual void CustomDrawCompact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
 
-       virtual ~SequenceInterface() = default;
+      virtual ~SequenceInterface() = default;
+
    };
 
 
    // return true if selection is made
    bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, int* selectedEntry, int* firstFrame, int sequenceOptions);
-
+   inline unsigned int SELECT_BACK_COLOR = 0x80808080;
+   inline unsigned int LABEL_WIDTH = 200;
 }
