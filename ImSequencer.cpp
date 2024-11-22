@@ -182,26 +182,29 @@ namespace ImSequencer
                   float zoomRatio = framePixelWidthTarget / oldFramePixelWidthTarget;
                   *firstFrame = (int)((*firstFrame + *currentFrame) * zoomRatio - *currentFrame);
                   *firstFrame = ImClamp(*firstFrame, sequence->GetFrameMin(), sequence->GetFrameMax() - visibleFrameCountAfterZoom);
+
+                  if (io.MouseDelta.x!=0)
+                  {
+                     *firstFrame += io.MouseDelta.x/10;
+                     if (*firstFrame < 0) *firstFrame = 0;
+                     if (*firstFrame > sequence->GetFrameMax() - visibleFrameCount)
+                     {
+                        *firstFrame = sequence->GetFrameMax() - visibleFrameCount;
+                     }
+                  }
                }
                else //if (io.KeyShift)
                {
-                  if (io.MouseWheel < -FLT_EPSILON)
+                  if (io.MouseWheel !=0)
                   {
-                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
+                     io.MouseWheel = 0;
                   }
-                  if (io.MouseWheel > FLT_EPSILON)
-                  {
-                     *firstFrame += io.MouseWheel * 10; io.MouseWheel = 0;
-                  }
-                  if (*firstFrame < 0) *firstFrame = 0;
-                  if (*firstFrame > sequence->GetFrameMax() - visibleFrameCount)
-                  {
-                     *firstFrame = sequence->GetFrameMax() - visibleFrameCount;
-                  }
+        
                }
             }
-         }
 
+         }
+        
 
          // Keep the current frame in view if the option is enabled
          if (sequenceOptions & SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW && currentFrame && *currentFrame >= 0)
