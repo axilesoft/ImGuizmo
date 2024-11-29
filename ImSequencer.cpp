@@ -601,6 +601,10 @@ namespace ImSequencer
          for (auto& customDraw : compactCustomDraws)
             sequence->CustomDrawCompact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);
 
+         //finish
+         if (compactCustomDraws.size()>0)
+            sequence->CustomDrawCompact(-1, draw_list, compactCustomDraws[0].customRect, compactCustomDraws[0].clippingRect);
+
          // copy paste
          if (sequenceOptions & SEQUENCER_COPYPASTE)
          {
