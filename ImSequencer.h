@@ -27,10 +27,11 @@
 
 #include <cstddef>
 
-struct ImDrawList;
-struct ImRect;
+#include "imgui.h"
+#include "imgui_internal.h"
 namespace ImSequencer
 {
+   using namespace ImGui;
    enum SEQUENCER_OPTIONS
    {
       SEQUENCER_EDIT_NONE = 0,
@@ -70,9 +71,9 @@ namespace ImSequencer
       virtual void DoubleClick(int /*index*/) {}
       virtual void CustomDraw(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*legendRect*/, const ImRect& /*clippingRect*/, const ImRect& /*legendClippingRect*/) {}
       virtual void CustomDrawCompact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
-
+      virtual void CustomDrawFinished() {}
       virtual ~SequenceInterface() = default;
-
+      ImRect mChildFrameRect{};
    };
 
 

@@ -1,4 +1,4 @@
-﻿// https://github.com/CedricGuillemet/ImGuizmo
+// https://github.com/CedricGuillemet/ImGuizmo
 // v1.91.3 WIP
 //
 // The MIT License(MIT)
@@ -134,7 +134,6 @@ namespace ImSequencer
       if (visibleFrameCount >= frameCount && firstFrame)
          *firstFrame = sequence->GetFrameMin();
 
-
       // --
       if (expanded && !*expanded)
       {
@@ -160,16 +159,16 @@ namespace ImSequencer
             }
             if (!overCustomDraw)
             {
-               if (io.KeyAlt) {
+               if (io.KeyCtrl) {
                   
                   float oldFramePixelWidthTarget = framePixelWidthTarget;
                   if (io.MouseWheel < -FLT_EPSILON)
                   {
-                     framePixelWidthTarget *= 1.2f; io.MouseWheel = 0; sequenceOptions |= SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW;
+                     framePixelWidthTarget *= 1/ 1.2f;  io.MouseWheel = 0; sequenceOptions |= SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW;
                   }
                   if (io.MouseWheel > FLT_EPSILON)
                   {
-                     framePixelWidthTarget *= 1 / 1.2f; io.MouseWheel = 0; sequenceOptions |= SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW;
+                     framePixelWidthTarget *= 1.2f; io.MouseWheel = 0; sequenceOptions |= SEQUENCER_KEEP_CURRENT_FRAME_IN_VIEW;
                   }
                   // Clamp the zoom level
                   int visibleFrameCountAfterZoom = (int)floorf((canvas_size.x - legendWidth) / framePixelWidthTarget);
@@ -202,7 +201,6 @@ namespace ImSequencer
         
                }
             }
-
          }
         
 
@@ -368,9 +366,9 @@ namespace ImSequencer
                   draw_list->AddLine(ImVec2(canvas_pos.x, canvas_pos.y + ItemHeight), ImVec2(canvas_size.x, canvas_pos.y + ItemHeight), 0xFF000000, 1);
                   */
                   // clip content
-
+         sequence->mChildFrameRect =  ImRect(childFramePos, childFramePos + childFrameSize);
          draw_list->PushClipRect(childFramePos, childFramePos + childFrameSize, true);
-
+ 
          // draw item names in the legend rect on the left
          size_t customHeight = 0;
          for (int i = 0; i < sequenceCount; i++)
@@ -379,6 +377,14 @@ namespace ImSequencer
             sequence->Get(i, NULL, NULL, &type, NULL);
             ImVec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2 + customHeight);
             draw_list->AddText(tpos, 0xFFFFFFFF, sequence->GetItemLabel(i));
+
+            // Check for legend rectangle click
+            ImRect legendRect(contentMin.x, tpos.y, contentMin.x + legendWidth - 1, tpos.y + ItemHeight);
+            if (legendRect.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && !MovingScrollBar && !MovingCurrentFrame)
+            {
+                if (selectedEntry)                  *selectedEntry = i;
+                ret = true;
+            }
 
             if (sequenceOptions & SEQUENCER_DEL)
             {
@@ -399,6 +405,15 @@ namespace ImSequencer
 
             size_t localCustomHeight = sequence->GetCustomHeight(i);
             ImVec2 pos = ImVec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
+
+            // Check for timeline background click
+            ImRect timelineRect(pos.x, pos.y, contentMin.x + canvas_size.x, pos.y + ItemHeight - 1);
+            if (timelineRect.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && !MovingScrollBar && !MovingCurrentFrame && movingEntry == -1)
+            {
+                if (selectedEntry)                 *selectedEntry = i;
+                ret = true;
+            }
+
             ImVec2 sz = ImVec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1 + localCustomHeight);
             if (!popupOpened && cy >= pos.y && cy < pos.y + (ItemHeight + localCustomHeight) && movingEntry == -1 && cx>contentMin.x && cx < contentMin.x + canvas_size.x)
             {
@@ -450,7 +465,7 @@ namespace ImSequencer
 
             if (slotP1.x <= (canvas_size.x + contentMin.x) && slotP2.x >= (contentMin.x + legendWidth))
             {
-               draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 0);
+               if (localCustomHeight>0) draw_list->AddRectFilled(slotP1, slotP3, slotColorHalf, 0);
                draw_list->AddRectFilled(slotP1, slotP2, slotColor, 0);
             }
             if (ImRect(slotP1, slotP2).Contains(io.MousePos) && io.MouseDoubleClicked[0])
@@ -527,6 +542,7 @@ namespace ImSequencer
 #else
             ImGui::CaptureMouseFromApp();
 #endif
+            
             int diffFrame = int((cx - movingPos) / framePixelWidth);
             if (std::abs(diffFrame) > 0)
             {
@@ -571,7 +587,7 @@ namespace ImSequencer
          {
             static const float cursorWidth = 8.f;
             float cursorOffset = contentMin.x + legendWidth + (*currentFrame - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
-            draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0xA02A2AFF, cursorWidth);
+            draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0x80FFFFFF, cursorWidth);
             char tmps[512];
             ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *currentFrame);
             draw_list->AddText(ImVec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
@@ -630,7 +646,6 @@ namespace ImSequencer
             bool inScrollBar = scrollBarRect.Contains(io.MousePos);
 
             draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF101010, 8);
-
 
             ImVec2 scrollBarC(scrollBarMin.x + legendWidth + startFrameOffset, scrollBarMin.y);
             ImVec2 scrollBarD(scrollBarMin.x + legendWidth + barWidthInPixels + startFrameOffset, scrollBarMax.y - 2);
