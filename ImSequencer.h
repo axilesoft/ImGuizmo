@@ -72,13 +72,24 @@ namespace ImSequencer
       virtual void CustomDraw(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*legendRect*/, const ImRect& /*clippingRect*/, const ImRect& /*legendClippingRect*/) {}
       virtual void CustomDrawCompact(int /*index*/, ImDrawList* /*draw_list*/, const ImRect& /*rc*/, const ImRect& /*clippingRect*/) {}
       virtual void CustomDrawFinished() {}
+
+      virtual bool IsItemEnabled(int /*index*/) const { return true; }
+      virtual void SetItemEnabled(int /*index*/, bool /*enabled*/) {}
+ 
       virtual ~SequenceInterface() = default;
       ImRect mChildFrameRect{};
+      bool curLabelClick;
+      int itemHeight = 20;
+      float framePixelWidthTarget = 10.f;
+
+      bool canMoveItem = true;
+      int clickedEntry = -1;
    };
 
 
    // return true if selection is made
    bool Sequencer(SequenceInterface* sequence, int* currentFrame, bool* expanded, int* selectedEntry, int* firstFrame, int sequenceOptions);
    inline unsigned int SELECT_BACK_COLOR = 0x80808080;
+   inline unsigned int NORMAL_BACK_COLOR = 0x80606060;
    inline unsigned int LABEL_WIDTH = 200;
 }
