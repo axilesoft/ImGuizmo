@@ -34,7 +34,7 @@
 #include <malloc.h>
 #endif
 #if !defined(_MSC_VER) && !defined(__MINGW64_VERSION_MAJOR)
-#define _malloca(x) alloca(x)
+#define _malloca(x) alloca(x)f
 #define _freea(x)
 #endif
 

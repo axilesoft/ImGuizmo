@@ -333,15 +333,15 @@ namespace ImSequencer
             if (px <= (canvas_size.x + canvas_pos.x) && px >= (canvas_pos.x + legendWidth))
             {
                draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)tiretStart), ImVec2((float)px, canvas_pos.y + (float)tiretEnd - 1), 0xFF606060, 1);
-
-               draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)ItemHeight), ImVec2((float)px, canvas_pos.y + (float)regionHeight - 1), 0x30606060, 1);
+               if (regionHeight > ItemHeight)
+               draw_list->AddLine(ImVec2((float)px, canvas_pos.y + (float)ItemHeight), ImVec2((float)px, canvas_pos.y + (float)regionHeight - 1), 0x30606060, 3);
             }
 
             if (baseIndex && px > (canvas_pos.x + legendWidth))
             {
                char tmps[512];
                ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", i);
-               draw_list->AddText(ImVec2((float)px + 3.f, canvas_pos.y), 0xFFBBBBBB, tmps);
+               draw_list->AddText(ImVec2((float)px + 3.f, canvas_pos.y+2), 0xFF808080, tmps);
             }
 
          };
@@ -624,18 +624,7 @@ namespace ImSequencer
             }
          }
 
-         // cursor
-         if (currentFrame && firstFrame && *currentFrame >= *firstFrame && *currentFrame <= sequence->GetFrameMax())
-         {
-            static const float cursorWidth = 1.f;
-            float cursorOffset = contentMin.x + legendWidth + (*currentFrame - 1 - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.0f;
-            draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0x80FFFFFF, cursorWidth);
- 
 
-            //char tmps[512];
-            //ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *currentFrame);
-            //draw_list->AddText(ImVec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
-         }
 
          for (auto& customDraw : customDraws)
             sequence->CustomDraw(customDraw.index, draw_list, customDraw.customRect, customDraw.legendRect, customDraw.clippingRect, customDraw.legendClippingRect);
@@ -793,6 +782,18 @@ namespace ImSequencer
 
                }
             }
+         }
+                  // cursor
+         if (currentFrame && firstFrame && *currentFrame >= *firstFrame && *currentFrame <= sequence->GetFrameMax())
+         {
+            static const float cursorWidth = 1.f;
+            float cursorOffset = contentMin.x + legendWidth + (*currentFrame - firstFrameUsed) * framePixelWidth - 4;// framePixelWidth / 2 + cursorWidth * 0.5f;
+            draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0x80FFFFFF, cursorWidth);
+ 
+
+            char tmps[512];
+            ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *currentFrame);
+            draw_list->AddText(ImVec2(cursorOffset + 3, canvas_pos.y+2  ), 0xFF3232FF, tmps);
          }
       }
 
